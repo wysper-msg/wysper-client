@@ -59,7 +59,7 @@ public class Client
 
     /**
      *
-     * @return a JSONObject containing the relevant user information
+     * @return a JSONObject containing the relevant username information
      * username, etc.
      */
     private void makeJson() {
