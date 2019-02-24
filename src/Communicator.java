@@ -1,5 +1,6 @@
 package src;
 
+
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -94,6 +95,3 @@ public class Communicator {
         return true;
     }
 }
-
-
-
