@@ -1,85 +1,85 @@
 package src;// A Java program for a Client
-import org.json.simple.JSONObject;
 
-import java.net.*;
-import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Client
 {
-    // initialize socket and input output streams 
-    private Socket socket            = null;
-    private DataInputStream  input   = null;
-    private DataOutputStream out     = null;
+    private String username;
+    private Communicator communicator;
 
-    // constructor to put ip address and port 
-    public Client(String address, int port, String username) {
-        // establish a connection 
-        try {
-            socket = new Socket(address, port);
-            System.out.println("Connected");
-
-            // takes input from terminal 
-            input = new DataInputStream(System.in);
-
-            // sends output to the socket 
-            out = new DataOutputStream(socket.getOutputStream());
-        }
-        catch(UnknownHostException u) {
-            System.out.println(u);
-        }
-        catch(IOException i) {
-            System.out.println(i);
-        }
-
-        // string to read message from input 
-        String line = "";
-
-        // keep reading until "Shh" is input
-        while (!line.equals("Shh")) {
-            try {
-                line = input.readLine();
-                out.writeUTF(line);
-            }
-            catch(IOException i) {
-                System.out.println(i);
-            }
-        }
-
-        // close the connection 
-        try {
-            input.close();
-            out.close();
-            socket.close();
-        }
-        catch(IOException i) {
-            System.out.println(i);
-        }
+    public Client(String username) {
+        this.username = username;
     }
 
     /**
      *
-     * @return a JSONObject containing the relevant username information
-     * username, etc.
+     * @param serverIPAddress - IP address of server
+     * @param portNumber - Port number open on server
      */
-    private void makeJson() {
-
+    public void setServer(String serverIPAddress, int portNumber) {
+        this.communicator = new Communicator(serverIPAddress, portNumber);
     }
+
+    /**
+     * Requires that server is set
+     * @param messageBody - Body text message will contain
+     * @return - true if message sends, false otherwise
+     */
+
+    public boolean sendMessage(String messageBody) {
+        if(this.communicator == null) {
+            throw new ExceptionInInitializerError("No server information set. Call Client.setServer method.");
+        }
+        Message message = new Message(username, messageBody);
+        return communicator.sendMessage(message);
+    }
+
+    /**
+     * Requires that server is set
+     * @return - Unread messages vended by server
+     */
+
+    public ArrayList<Message> getNewMessages() {
+        if(this.communicator == null) {
+            throw new ExceptionInInitializerError("No server information set. Call Client.setServer method.");
+        }
+        return communicator.getNewMessages();
+    }
+
+
+
+
 
 
     public static void main(String args[]) {
         System.out.print("Enter your username: ");
         Scanner scanner = new Scanner(System.in);
         String username = scanner.nextLine();
-
-        Client client = new Client("129.161.136.236", 5000, username);
-        /*
-        try {
-            System.out.println("My ip is: " + InetAddress.getLocalHost().getHostAddress());
+        System.out.println("Enter your server IP address: ");
+        String serverIP = scanner.nextLine();
+        System.out.println("Enter your server port number: ");
+        String portString = scanner.nextLine();
+        int portNumber = Integer.valueOf(portString);
+        Client client = new Client(username);
+        client.setServer(serverIP, portNumber);
+        String message;
+        List<Message> newMessages;
+        while (true) {
+             message = scanner.nextLine();
+             if(message.equals("'Exit'")) {
+                 break;
+             } else if(message.equals("'NewMessages'")) {
+                 newMessages = client.getNewMessages();
+                 for(int i = 0; i < newMessages.size(); i++) {
+                     System.out.println(newMessages.get(i));
+                 }
+             } else {
+                 if(!client.sendMessage(message)) {
+                     System.err.println("Message didn't send");
+                 }
+             }
         }
-        catch (Exception e) {
-            System.out.println(e);
-        }
-        */
     }
 } 
