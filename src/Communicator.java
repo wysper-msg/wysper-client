@@ -3,6 +3,7 @@ package src;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -55,8 +56,10 @@ public class Communicator {
                 Response response = new Response(json);
                 newMessages = response.getMessages();
             }
-        } catch (Exception e) {
-            System.err.println("Error pulling messages: " + e.getMessage());
+        } catch (ParseException e) {
+            System.err.println("Error JSON parsing response message!");
+        } catch (IOException e) {
+            System.err.println("Error getting new Messages: " + e.getMessage());
         }
         return newMessages;
     }
@@ -77,7 +80,7 @@ public class Communicator {
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
             OutputStream output = connection.getOutputStream();
-            output.write(json.toString().getBytes());
+            output.write(json.toJSONString().getBytes());
             output.flush();
             output.close();
             int responseCode = connection.getResponseCode();

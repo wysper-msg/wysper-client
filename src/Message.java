@@ -101,7 +101,7 @@ public class Message{
         JSONObject j = new JSONObject();
         j.put("username", this.username);
         j.put("body", this.body);
-        j.put("timestamp", this.timestamp);
+        j.put("timestamp", this.timestamp.toString());
 
         return j;
     }
