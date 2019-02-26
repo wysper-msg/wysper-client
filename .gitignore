@@ -7,7 +7,9 @@
 # BlueJ files
 *.ctxt
 
+# Intellij auto-generated directories
 ./production*
+./src/production*
 
 # Intellij files
 *.idea
