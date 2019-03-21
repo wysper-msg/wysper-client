@@ -33,14 +33,18 @@ public class Communicator {
      * @return new messages vended by the server
      */
 
-    public ArrayList<Message> getNewMessages() {
+    public ArrayList<Message> getNewMessages(String username) {
         ArrayList<Message> newMessages = new ArrayList<>();
         try {
             URL url = new URL(String.format("http://%s:%d/poll", _serverIP, _portNumber));
             HttpURLConnection connection = (HttpURLConnection)url.openConnection();
             connection.setRequestMethod("GET");
+            connection.setDoOutput(true);
+            OutputStream output = connection.getOutputStream();
+            output.write(username.getBytes());
+            output.flush();
+            output.close();
             int responseCode = connection.getResponseCode();
-            System.out.println("Response code: " + responseCode);
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 String inputLine;
@@ -49,7 +53,6 @@ public class Communicator {
                     responseBuffer.append(inputLine);
                 }
                 in.close();
-                System.out.println(responseBuffer.toString());
                 JSONParser parser = new JSONParser();
 
                 JSONObject json = (JSONObject)parser.parse(responseBuffer.toString());
@@ -62,6 +65,48 @@ public class Communicator {
             System.err.println("Error getting new Messages: " + e.getMessage());
         }
         return newMessages;
+    }
+
+    /**
+     *
+     * @return new messages vended by the server
+     */
+
+    public ArrayList<Message> loadHistory(String username) {
+        ArrayList<Message> messageHistory = new ArrayList<>();
+        try {
+            URL url = new URL(String.format("http://%s:%d/init", _serverIP, _portNumber));
+            HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setDoOutput(true);
+            OutputStream output = connection.getOutputStream();
+            output.write(username.getBytes());
+            output.flush();
+            output.close();
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String inputLine;
+                StringBuffer responseBuffer = new StringBuffer();
+                while((inputLine = in.readLine()) != null) {
+                    responseBuffer.append(inputLine);
+                }
+                in.close();
+                JSONParser parser = new JSONParser();
+
+                JSONObject json = (JSONObject)parser.parse(responseBuffer.toString());
+                Response response = new Response(json);
+                messageHistory = response.getMessages();
+            }
+        } catch (ParseException e) {
+            System.err.println("Error JSON parsing response message!");
+        } catch (IOException e) {
+            System.err.println("Error getting new Messages: " + e.getMessage());
+        }
+        if(messageHistory == null) {
+            return new ArrayList<Message>();
+        }
+        return messageHistory;
     }
 
     /**
@@ -86,6 +131,8 @@ public class Communicator {
             int responseCode = connection.getResponseCode();
             if (responseCode != HttpURLConnection.HTTP_OK) {
                 //POST Request did not work
+                System.out.println("Response Code: "+ responseCode);
+                System.out.println("Error sending message.");
                 return false;
             }
         } catch (MalformedURLException e) {
@@ -93,6 +140,7 @@ public class Communicator {
             return false;
         } catch (IOException e) {
             System.err.println(e.getMessage());
+            e.printStackTrace();
             return false;
         }
         return true;

@@ -20,11 +20,13 @@ public class Response {
         JSONArray mList = (JSONArray) json.get("messages");
         this.messages = new ArrayList<>();
 
-        for (Object value : mList) {
-            if (value instanceof Message) {
-                Message m = (Message) value;
+        if(mList != null) {
+            for ( int i = 0; i < mList.size(); i++) {
+                Message m = new Message((JSONObject)mList.get(i));
                 this.messages.add(m);
             }
+        } else {
+            System.err.println();
         }
     }
 

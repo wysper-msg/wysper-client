@@ -45,12 +45,20 @@ public class Client
         if(this.communicator == null) {
             throw new ExceptionInInitializerError("No server information set. Call Client.setServer method.");
         }
-        return communicator.getNewMessages();
+        return communicator.getNewMessages(username);
     }
 
+    /**
+     * Requires that server is set
+     * @return - Unread messages vended by server
+     */
 
-
-
+    public ArrayList<Message> getMessageHistory() {
+        if(this.communicator == null) {
+            throw new ExceptionInInitializerError("No server information set. Call Client.setServer method.");
+        }
+        return communicator.loadHistory(username);
+    }
 
 
     public static void main(String args[]) {
@@ -66,19 +74,33 @@ public class Client
         client.setServer(serverIP, portNumber);
         String message;
         List<Message> newMessages;
+        List<Message> messageHistory = client.getMessageHistory();
+        for(int i = 0; i < messageHistory.size(); i++) {
+            System.out.println(messageHistory.get(i));
+        }
         while (true) {
              message = scanner.nextLine();
-             if(message.equals("'Exit'")) {
-                 break;
-             } else if(message.equals("'NewMessages'")) {
+             if(message.equals("")){
                  newMessages = client.getNewMessages();
                  for(int i = 0; i < newMessages.size(); i++) {
                      System.out.println(newMessages.get(i));
                  }
+             } else if(message.equals("'Exit'")) {
+                 break;
              } else {
-                 if(!client.sendMessage(message)) {
-                     System.err.println("Message didn't send");
+                 boolean sentMessage = client.sendMessage(message);
+                 if(!sentMessage) {
+                     System.err.println("Message didn't send.");
                  }
+//                 while(!sentMessage) {
+//                     System.err.println("Message didn't send. Will attempt again in 2 seconds.");
+//                     try {
+//                         Thread.sleep(2000);
+//                     } catch (InterruptedException e) {
+//
+//                     }
+//                     sentMessage = client.sendMessage(message);
+//                 }
              }
         }
     }
