@@ -63,6 +63,7 @@ public class Communicator {
             System.err.println("Error JSON parsing response message!");
         } catch (IOException e) {
             System.err.println("Error getting new Messages: " + e.getMessage());
+            e.printStackTrace();
         }
         return newMessages;
     }

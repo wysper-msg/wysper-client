@@ -73,35 +73,56 @@ public class Client
         Client client = new Client(username);
         client.setServer(serverIP, portNumber);
         String message;
-        List<Message> newMessages;
         List<Message> messageHistory = client.getMessageHistory();
         for(int i = 0; i < messageHistory.size(); i++) {
             System.out.println(messageHistory.get(i));
         }
+        GetMessages getMessages = new GetMessages(client);
+        Thread t = new Thread(getMessages);
+        t.start();
+
         while (true) {
              message = scanner.nextLine();
-             if(message.equals("")){
-                 newMessages = client.getNewMessages();
-                 for(int i = 0; i < newMessages.size(); i++) {
-                     System.out.println(newMessages.get(i));
-                 }
-             } else if(message.equals("'Exit'")) {
+
+             if(message.equals("'Exit'")) {
                  break;
+             } else if(message.equals("")) {
+                 continue;
              } else {
                  boolean sentMessage = client.sendMessage(message);
                  if(!sentMessage) {
-                     System.err.println("Message didn't send.");
+                     for(int i = 0; i < 5; i++) {
+                         System.err.println(String.format("Message didn't send. Will attempt to send %d more times", 5-i));
+                         try {
+                         Thread.sleep(2000);
+                         } catch (InterruptedException e) {
+
+                         }
+                         sentMessage = client.sendMessage(message);
+                         if(sentMessage) {
+                             break;
+                         }
+                     }
                  }
-//                 while(!sentMessage) {
-//                     System.err.println("Message didn't send. Will attempt again in 2 seconds.");
-//                     try {
-//                         Thread.sleep(2000);
-//                     } catch (InterruptedException e) {
-//
-//                     }
-//                     sentMessage = client.sendMessage(message);
-//                 }
              }
         }
     }
-} 
+}
+
+class GetMessages implements Runnable{
+    private Client client;
+    public GetMessages(Client client) {
+        this.client = client;
+    }
+
+    public void run() {
+        while(true) {
+            List<Message> newMessages;
+            newMessages = client.getNewMessages();
+            for(int i = 0; i < newMessages.size(); i++) {
+                System.out.println(newMessages.get(i));
+            }
+        }
+    }
+
+}
