@@ -45,12 +45,20 @@ public class Client
         if(this.communicator == null) {
             throw new ExceptionInInitializerError("No server information set. Call Client.setServer method.");
         }
-        return communicator.getNewMessages();
+        return communicator.getNewMessages(username);
     }
 
+    /**
+     * Requires that server is set
+     * @return - Unread messages vended by server
+     */
 
-
-
+    public ArrayList<Message> getMessageHistory() {
+        if(this.communicator == null) {
+            throw new ExceptionInInitializerError("No server information set. Call Client.setServer method.");
+        }
+        return communicator.loadHistory(username);
+    }
 
 
     public static void main(String args[]) {
@@ -65,21 +73,56 @@ public class Client
         Client client = new Client(username);
         client.setServer(serverIP, portNumber);
         String message;
-        List<Message> newMessages;
+        List<Message> messageHistory = client.getMessageHistory();
+        for(int i = 0; i < messageHistory.size(); i++) {
+            System.out.println(messageHistory.get(i));
+        }
+        GetMessages getMessages = new GetMessages(client);
+        Thread t = new Thread(getMessages);
+        t.start();
+
         while (true) {
              message = scanner.nextLine();
+
              if(message.equals("'Exit'")) {
                  break;
-             } else if(message.equals("'NewMessages'")) {
-                 newMessages = client.getNewMessages();
-                 for(int i = 0; i < newMessages.size(); i++) {
-                     System.out.println(newMessages.get(i));
-                 }
+             } else if(message.equals("")) {
+                 continue;
              } else {
-                 if(!client.sendMessage(message)) {
-                     System.err.println("Message didn't send");
+                 boolean sentMessage = client.sendMessage(message);
+                 if(!sentMessage) {
+                     for(int i = 0; i < 5; i++) {
+                         System.err.println(String.format("Message didn't send. Will attempt to send %d more times", 5-i));
+                         try {
+                         Thread.sleep(2000);
+                         } catch (InterruptedException e) {
+
+                         }
+                         sentMessage = client.sendMessage(message);
+                         if(sentMessage) {
+                             break;
+                         }
+                     }
                  }
              }
         }
     }
-} 
+}
+
+class GetMessages implements Runnable{
+    private Client client;
+    public GetMessages(Client client) {
+        this.client = client;
+    }
+
+    public void run() {
+        while(true) {
+            List<Message> newMessages;
+            newMessages = client.getNewMessages();
+            for(int i = 0; i < newMessages.size(); i++) {
+                System.out.println(newMessages.get(i));
+            }
+        }
+    }
+
+}

@@ -2,15 +2,16 @@ package src;
 
 import org.json.simple.JSONObject;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+
 
 /** Message data that needs to be seen on the screen
  */
 public class Message{
     String username;                // Username of the sender
     String body;             // Message body
-    LocalDateTime timestamp;    // Time the message was sent
+    Timestamp timestamp;    // Time the message was sent
 
     /**
      * Standard message constructor
@@ -21,7 +22,7 @@ public class Message{
     public Message(String username, String text) {
         this.username = username;
         this.body = text;
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = new Timestamp(System.currentTimeMillis());
     }
 
     /**
@@ -32,10 +33,10 @@ public class Message{
             this.username = j.get("username").toString();
         }
         if (j.containsKey("timestamp")) {
-            this.timestamp = (LocalDateTime) j.get("timestamp");
+            this.timestamp = Timestamp.valueOf((String)j.get("timestamp")) ;
         }
         else {
-            this.timestamp = LocalDateTime.now();
+            this.timestamp = new Timestamp(System.currentTimeMillis());
         }
         if (j.containsKey("body")) {
             this.body = j.get("body").toString();
@@ -90,7 +91,7 @@ public class Message{
             }
         }
         ret += makeSpaceString(wrapLen - lineCount + 2);
-        ret += this.timestamp.format(DateTimeFormatter.ISO_LOCAL_TIME);
+        ret += new SimpleDateFormat("hh:mm:ss").format(timestamp);
         return ret;
     }
 
@@ -123,7 +124,7 @@ public class Message{
     /**
      * @return a LocalDateTime object of when the message was created
      */
-    public LocalDateTime getTimestamp() {
+    public Timestamp getTimestamp() {
         return this.timestamp;
     }
 
