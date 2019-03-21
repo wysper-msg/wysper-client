@@ -37,7 +37,7 @@ public class Communicator {
         ArrayList<Message> newMessages = new ArrayList<>();
         try {
             URL url = new URL(String.format("http://%s:%d/poll", _serverIP, _portNumber));
-            HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setDoOutput(true);
             OutputStream output = connection.getOutputStream();
@@ -49,18 +49,20 @@ public class Communicator {
                 BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 String inputLine;
                 StringBuffer responseBuffer = new StringBuffer();
-                while((inputLine = in.readLine()) != null) {
+                while ((inputLine = in.readLine()) != null) {
                     responseBuffer.append(inputLine);
                 }
                 in.close();
                 JSONParser parser = new JSONParser();
 
-                JSONObject json = (JSONObject)parser.parse(responseBuffer.toString());
+                JSONObject json = (JSONObject) parser.parse(responseBuffer.toString());
                 Response response = new Response(json);
                 newMessages = response.getMessages();
             }
         } catch (ParseException e) {
             System.err.println("Error JSON parsing response message!");
+        } catch (java.net.ConnectException e) {
+
         } catch (IOException e) {
             System.err.println("Error getting new Messages: " + e.getMessage());
             e.printStackTrace();
@@ -101,6 +103,8 @@ public class Communicator {
             }
         } catch (ParseException e) {
             System.err.println("Error JSON parsing response message!");
+        } catch (java.net.ConnectException e) {
+
         } catch (IOException e) {
             System.err.println("Error getting new Messages: " + e.getMessage());
         }
