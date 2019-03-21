@@ -57,7 +57,7 @@ public class Message{
     @Override
     public String toString() {
         int wrapLen = 50;
-        int userPad = 10;
+        int userPad = 30;
         String[] bodyArray = this.body.split("\\s+");
 
         String ret = "";
