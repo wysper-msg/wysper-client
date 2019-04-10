@@ -18,3 +18,11 @@ Finally, in project structure make sure your terminal output is set to some loca
 Now try and run the basicServer file. You should see terminal output.
 
 If at any point you have trouble, google the exact error message and you may be able to quickly find a solution.
+
+
+##Getting JavaFX for Ubuntu
+sudo apt-get install openjfx
+sudo apt-get install libcanberra-gtk-module
+
+Next remove the current sdk used in the project structure and re-add it.
+File -> Project Structure -> SDK

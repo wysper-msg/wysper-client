@@ -124,5 +124,4 @@ class GetMessages implements Runnable{
             }
         }
     }
-
 }
