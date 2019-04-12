@@ -5,6 +5,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -21,10 +22,17 @@ import javax.sound.sampled.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 
 public class ClientApplication extends Application {
+    public static Semaphore semaphore = new Semaphore(1);
+
+    int MESSAGE_LOADING_STEP = 20;
+    double TOP_BUTTON_WIDTH = 400;
+    double TOP_BUTTON_HEIGHT = 40;
     double NEW_MESSAGE_BOX_WIDTH = 600;
     double NEW_MESSAGE_BOX_HEIGHT = 40;
     double SEND_BUTTON_WIDTH = 200;
@@ -37,9 +45,12 @@ public class ClientApplication extends Application {
     double POPUP_INPUT_HEIGHT = 40;
     double LOGIN_BUTTON_WIDTH = 200;
     double LOGIN_BUTTON_HEIGHT = 40;
+    private Button logoutButton;
+    private Button moreMessagesButton;
     private TextArea newMessage;
     private Button sendButton;
     private TextArea messageBox;
+    private Scene chatRoomScene;
     private Text ipLabelBox;
     private String ipLabelText = "IP address of server:";
     private TextArea ipText;
@@ -53,7 +64,7 @@ public class ClientApplication extends Application {
     private int serverPortNumber;
     private String username;
     private Client client;
-
+    private Integer numberOfMessagesLoaded = 0;
     @Override
     public void start(Stage primaryStage) throws Exception {
 
@@ -101,7 +112,6 @@ public class ClientApplication extends Application {
         loginButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
-                soundClip();
                 serverIPAddress = ipText.getText();
                 serverPortNumber = Integer.valueOf(portText.getText());
                 username = usernameText.getText();
@@ -155,8 +165,10 @@ public class ClientApplication extends Application {
         });
 
         messageBox = new TextArea();
+        messageBox.autosize();
         messageBox.setMinWidth(MESSAGE_PANE_WIDTH);
         messageBox.setMinHeight(MESSAGE_PANE_HEIGHT);
+        messageBox.setWrapText(true);
         messageBox.setEditable(false);
         messageBox.textProperty().addListener(new ChangeListener<String>() {
             @Override
@@ -168,7 +180,8 @@ public class ClientApplication extends Application {
         StringBuilder builder = new StringBuilder();
 
         for(int i = 0; i < messageHistory.size(); i++){
-            builder.append("\n"+messageHistory.get(i));
+            builder.append(messageFormatter(messageHistory.get(i)) + "\n");
+            numberOfMessagesLoaded ++;
         }
         messageBox.appendText(builder.toString());
 
@@ -177,17 +190,76 @@ public class ClientApplication extends Application {
         newMessage.setMinHeight(NEW_MESSAGE_BOX_HEIGHT);
         HBox hbox = new HBox(newMessage, sendButton);
         hbox.setMaxHeight(NEW_MESSAGE_BOX_HEIGHT);
+        hbox.setMinHeight(NEW_MESSAGE_BOX_HEIGHT);
+
+        logoutButton = new Button();
+        logoutButton.setText("Logout");
+        logoutButton.setMinWidth(TOP_BUTTON_WIDTH);
+        logoutButton.setMinHeight(TOP_BUTTON_HEIGHT);
+        logoutButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                //Close current window
+
+                //Open Login window
+
+            }
+        });
+        moreMessagesButton = new Button();
+        moreMessagesButton.setText("Get more messages");
+        moreMessagesButton.setMinWidth(TOP_BUTTON_WIDTH);
+        moreMessagesButton.setMinHeight(TOP_BUTTON_HEIGHT);
+        moreMessagesButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                try {
+                    numberOfMessagesLoaded += MESSAGE_LOADING_STEP;
+                    semaphore.acquire();
+                    List<Message> nMessages = client.getNMessages(numberOfMessagesLoaded);
+                    StringBuilder builder = new StringBuilder();
+                    for(int i = 0; i < nMessages.size(); i++){
+                        builder.append(messageFormatter(nMessages.get(i)) + "\n");
+                    }
+                    messageBox.clear();
+                    messageBox.appendText(builder.toString());
+                    numberOfMessagesLoaded = nMessages.size();
+                    semaphore.release();
+                } catch (InterruptedException e) {
+                    System.out.println("GetMoreMessageButton: Error with semaphore");
+                }
+            }
+        });
+
+        HBox topButtons = new HBox(logoutButton, moreMessagesButton);
+        topButtons.setMaxHeight(TOP_BUTTON_HEIGHT);
+        topButtons.setMinHeight(TOP_BUTTON_HEIGHT);
 
 
-        VBox vbox = new VBox(messageBox, hbox);
-        Scene scene = new Scene(vbox, MESSAGE_PANE_WIDTH, MESSAGE_PANE_HEIGHT+NEW_MESSAGE_BOX_HEIGHT);
+        VBox vbox = new VBox(topButtons, messageBox, hbox);
+        vbox.setAlignment(Pos.CENTER);
 
+        vbox.autosize();
+        chatRoomScene  = new Scene(vbox, MESSAGE_PANE_WIDTH, TOP_BUTTON_HEIGHT+MESSAGE_PANE_HEIGHT+NEW_MESSAGE_BOX_HEIGHT);
 
-
-        scene.getStylesheets().add("src/darktheme.css");
-        chatRoomStage.setScene(scene);
+        chatRoomScene.getStylesheets().add("src/darktheme.css");
+        chatRoomStage.setScene(chatRoomScene);
+        chatRoomStage.setMinWidth(MESSAGE_PANE_WIDTH);
+        chatRoomStage.setMinHeight(TOP_BUTTON_HEIGHT + SEND_BUTTON_HEIGHT + 25);
+        chatRoomStage.setHeight(TOP_BUTTON_HEIGHT + SEND_BUTTON_HEIGHT + MESSAGE_PANE_HEIGHT);
+        ChangeListener<Number> stageSizeListener = (observable, oldValue, newValue) -> System.out.println();
+        chatRoomStage.heightProperty().addListener((obs, oldVal, newVal) -> {
+            double newChatRoomHeight = chatRoomScene.getHeight() - TOP_BUTTON_HEIGHT - SEND_BUTTON_HEIGHT;
+            messageBox.setMinHeight(newChatRoomHeight);
+        });
+        chatRoomStage.widthProperty().addListener((obs, oldVal, newVal) -> {
+            double newTopButtonWidths = chatRoomScene.getWidth()/2;
+            logoutButton.setMinWidth(newTopButtonWidths);
+            moreMessagesButton.setMinWidth(newTopButtonWidths);
+            newMessage.setMinWidth(chatRoomScene.getWidth()-SEND_BUTTON_WIDTH);
+        });
+        chatRoomStage.setFullScreen(true);
         chatRoomStage.show();
-        ApplicationGetMessages getMessages = new ApplicationGetMessages(client, messageBox);
+        ApplicationGetMessages getMessages = new ApplicationGetMessages(client, messageBox, numberOfMessagesLoaded);
         Thread t = new Thread(getMessages);
         t.start();
     }
@@ -203,49 +275,30 @@ public class ClientApplication extends Application {
         return builder.toString();
     }
 
-    private void soundClip() {
-        try {
-            File soundFile = new File("/home/alexander/Downloads/r2d2_scream_converted.wav");
-            AudioInputStream audioIn = AudioSystem.getAudioInputStream(soundFile);
-            // Get a sound clip resource.
-            Clip clip = AudioSystem.getClip();
-            // Open audio clip and load samples from the audio input stream.
-            clip.open(audioIn);
-            clip.start();
-        } catch (LineUnavailableException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (UnsupportedAudioFileException e) {
-            e.printStackTrace();
-        }
-    }
+    public static String messageFormatter(Message message) {
+        String header = message.username.toString() + " " + new SimpleDateFormat("hh:mm:ss").format(message.timestamp);
 
-    private static synchronized void playSound() {
-        new Thread(new Runnable() {
-            // The wrapper thread is unnecessary, unless it blocks on the
-            // Clip finishing; see comments.
-            public void run() {
-                try {
-                    Clip clip = AudioSystem.getClip();
-                    AudioInputStream inputStream = AudioSystem.getAudioInputStream(
-                            Main.class.getResourceAsStream("./src/r2d2_scream_converted.wav"));
-                    clip.open(inputStream);
-                    clip.start();
-                } catch (Exception e) {
-                    System.err.println(e.getMessage());
-                }
-            }
-        }).start();
+        StringBuilder builder = new StringBuilder();
+        for(int i = 0; i < header.length(); i++) {
+            builder.append("*");
+        }
+        builder.append("\n"+header+"|"+"\n");
+        for(int i = 0; i < header.length(); i++){
+            builder.append("*");
+        }
+        builder.append("\n"+message.body+"\n");
+        return builder.toString();
     }
 }
 
 class ApplicationGetMessages implements Runnable{
     private Client client;
     private TextArea messageBox;
-    public ApplicationGetMessages(Client client, TextArea messageBox) {
+    private Integer numberOfMessagesInBox;
+    public ApplicationGetMessages(Client client, TextArea messageBox, Integer currentNumMessages) {
         this.client = client;
         this.messageBox = messageBox;
+        this.numberOfMessagesInBox = currentNumMessages;
     }
 
     public void run() {
@@ -260,15 +313,25 @@ class ApplicationGetMessages implements Runnable{
                 continue;
             }
             List<Message> newMessages;
-            newMessages = client.getNewMessages();
-            if(newMessages != null){
-                StringBuilder builder = new StringBuilder();
+            try {
+                ClientApplication.semaphore.acquire();
+                newMessages = client.getNewMessages();
+                ClientApplication.semaphore.release();
+                if(newMessages != null){
+                    StringBuilder builder = new StringBuilder();
 
-                for(int i = 0; i < newMessages.size(); i++){
-                    builder.append("\n"+newMessages.get(i));
+                    for(int i = 0; i < newMessages.size(); i++){
+                        builder.append(ClientApplication.messageFormatter(newMessages.get(i)) + "\n");
+                        numberOfMessagesInBox ++;
+                    }
+                    messageBox.appendText(builder.toString());
                 }
-                messageBox.appendText(builder.toString());
+            } catch (InterruptedException e) {
+                System.out.println("ClientApplication: GetMessages interrupted");
             }
+
+
+
         }
     }
 }

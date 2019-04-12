@@ -9,6 +9,7 @@ public class Client
     private String username;
     private Communicator communicator;
 
+
     public Client(String username) {
         this.username = username;
     }
@@ -58,6 +59,13 @@ public class Client
             throw new ExceptionInInitializerError("No server information set. Call Client.setServer method.");
         }
         return communicator.loadHistory(username);
+    }
+
+    public ArrayList<Message> getNMessages(int numMessages) {
+        if(this.communicator == null) {
+            throw new ExceptionInInitializerError("No server information set. Call Client.setServer method.");
+        }
+        return communicator.getNMessages(numMessages);
     }
 
 
