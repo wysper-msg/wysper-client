@@ -6,11 +6,12 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
 
-/** Message data that needs to be seen on the screen
+/**
+ * Stores Message data
  */
 public class Message{
-    String username;                // Username of the sender
-    String body;             // Message body
+    String username;        // Username of the sender
+    String body;            // Message body
     Timestamp timestamp;    // Time the message was sent
 
     /**
@@ -26,6 +27,8 @@ public class Message{
     }
 
     /**
+     * JSON Message constructor
+     * Creates a Message from its JSON representation
      * @param j a json representation of a message
      */
     public Message(JSONObject j) {
@@ -44,16 +47,23 @@ public class Message{
     }
 
     /**
-     * @param size of the space string to make
+     * Helper function to format messages in a String
+     * @param size size of the space string to make
      * @return a string of size size of all spaces
      */
-    public String makeSpaceString(int size) {
+    private String makeSpaceString(int size) {
         String ret = new String();
         for (int i = 0; i < size; i++) {
             ret += " ";
         }
         return ret;
     }
+
+    /**
+     * Displays this Message object in a String
+     * @return a String representation of the message containing sender,
+     * timestamp, and message text
+     */
     @Override
     public String toString() {
         int wrapLen = 50;
@@ -96,6 +106,7 @@ public class Message{
     }
 
     /**
+     * Converts this Message to JSON
      * @return a json representation of the message
      */
     public JSONObject toJSON() {
@@ -127,23 +138,4 @@ public class Message{
     public Timestamp getTimestamp() {
         return this.timestamp;
     }
-
-    public static void main(String[] args) {
-        System.out.println("Message main");
-        String s2 = "What if I pass a loooooooooooooooooooooooooooooo" +
-                "ooooooooooooooooooooooooooooooooooong " +
-                "string?";
-
-        String s3 = "Hello from wysper";
-        Message msg2 = new Message("Tom", s3);
-        Message msg1 = new Message("Tom", s2);
-        Message msg3 = new Message("Corey", "What's up");
-        Message msg4 = new Message("Tom", "Looks like the text wraps!");
-        System.out.println(msg2);
-        System.out.println(msg3);
-        System.out.println(msg1);
-        System.out.println(msg4);
-    }
-
-
 }
