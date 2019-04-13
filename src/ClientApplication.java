@@ -65,13 +65,17 @@ public class ClientApplication extends Application {
     private String username;
     private Client client;
     private Integer numberOfMessagesLoaded = 0;
+    private Stage chatRoomStage;
+    private Stage loginStage;
+    private Thread newMessagesThread;
     @Override
     public void start(Stage primaryStage) throws Exception {
 
         //Popup to gather the client and server information
-        final Stage popup = new Stage();
-        popup.initModality(Modality.APPLICATION_MODAL);
-        popup.initOwner(primaryStage);
+        loginStage = new Stage();
+        loginStage.initModality(Modality.APPLICATION_MODAL);
+        loginStage.initOwner(primaryStage);
+        loginStage.setTitle("Wysper Login");
 
         ipLabelBox = new Text(labelMaker(ipLabelText));
         ipText = new TextArea();
@@ -118,7 +122,7 @@ public class ClientApplication extends Application {
                 ipText.setText("");
                 portText.setText("");
                 usernameText.setText("");
-                popup.hide();
+                loginStage.hide();
                 client = new Client(username);
                 client.setServer(serverIPAddress, serverPortNumber);
                 try {
@@ -136,17 +140,17 @@ public class ClientApplication extends Application {
 
         popupScene.getStylesheets().add("src/darktheme.css");
 
-        popup.setScene(popupScene);
-        popup.setMinHeight(POPUP_INPUT_HEIGHT*3+LOGIN_BUTTON_HEIGHT+28);
-        popup.setMaxHeight(POPUP_INPUT_HEIGHT*3+LOGIN_BUTTON_HEIGHT+28);
-        popup.setMinWidth(POPUP_LABEL_WIDTH*6.4 + POPUP_INPUT_WIDTH);
-        popup.setMaxWidth(POPUP_LABEL_WIDTH*6.4 + POPUP_INPUT_WIDTH);
+        loginStage.setScene(popupScene);
+        loginStage.setMinHeight(POPUP_INPUT_HEIGHT*3+LOGIN_BUTTON_HEIGHT+28);
+        loginStage.setMaxHeight(POPUP_INPUT_HEIGHT*3+LOGIN_BUTTON_HEIGHT+28);
+        loginStage.setMinWidth(POPUP_LABEL_WIDTH*6.4 + POPUP_INPUT_WIDTH);
+        loginStage.setMaxWidth(POPUP_LABEL_WIDTH*6.4 + POPUP_INPUT_WIDTH);
 
-        popup.show();
+        loginStage.show();
     }
 
     public void launchChatroom() throws InterruptedException {
-        Stage chatRoomStage = new Stage();
+        chatRoomStage = new Stage();
         chatRoomStage.setTitle("Wysper");
         sendButton = new Button();
         sendButton.setText("Send Message");
@@ -200,9 +204,10 @@ public class ClientApplication extends Application {
             @Override
             public void handle(ActionEvent event) {
                 //Close current window
-
+                chatRoomStage.hide();
+                newMessagesThread.stop();
                 //Open Login window
-
+                loginStage.show();
             }
         });
         moreMessagesButton = new Button();
@@ -260,8 +265,8 @@ public class ClientApplication extends Application {
         chatRoomStage.setFullScreen(true);
         chatRoomStage.show();
         ApplicationGetMessages getMessages = new ApplicationGetMessages(client, messageBox, numberOfMessagesLoaded);
-        Thread t = new Thread(getMessages);
-        t.start();
+        newMessagesThread = new Thread(getMessages);
+        newMessagesThread.start();
     }
 
     private String labelMaker(String input) {
@@ -329,9 +334,6 @@ class ApplicationGetMessages implements Runnable{
             } catch (InterruptedException e) {
                 System.out.println("ClientApplication: GetMessages interrupted");
             }
-
-
-
         }
     }
 }
