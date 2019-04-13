@@ -12,6 +12,7 @@ public class Client
     private String username;            // Unique username identifying a user
     private Communicator communicator;  // Connects to server to send and receive messages
 
+
     /**
      * Standard Client constructor
      * @param username uniquely identifies this user
@@ -68,6 +69,15 @@ public class Client
         }
         return communicator.loadHistory(username);
     }
+
+
+    public ArrayList<Message> getNMessages(int numMessages) {
+        if(this.communicator == null) {
+            throw new ExceptionInInitializerError("No server information set. Call Client.setServer method.");
+        }
+        return communicator.getNMessages(numMessages);
+    }
+
 
     /**
      * Prompts the client for information then connects to a running server, if possible
@@ -153,5 +163,4 @@ class GetMessages implements Runnable{
             }
         }
     }
-
 }

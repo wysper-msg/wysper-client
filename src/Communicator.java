@@ -82,6 +82,47 @@ public class Communicator {
      *  get n messages on users first startup
      * @return List of new Messages vended by the server
      */
+    public ArrayList<Message> getNMessages(int numMessages) {
+        ArrayList<Message> newMessages = new ArrayList<>();
+        try {
+            URL url = new URL(String.format("http://%s:%d/getn", _serverIP, _portNumber));
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setDoOutput(true);
+            OutputStream output = connection.getOutputStream();
+            output.write(String.valueOf(numMessages).getBytes());
+            output.flush();
+            output.close();
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String inputLine;
+                StringBuffer responseBuffer = new StringBuffer();
+                while ((inputLine = in.readLine()) != null) {
+                    responseBuffer.append(inputLine);
+                }
+                in.close();
+                JSONParser parser = new JSONParser();
+
+                JSONObject json = (JSONObject) parser.parse(responseBuffer.toString());
+                Response response = new Response(json);
+                newMessages = response.getMessages();
+            }
+        } catch (ParseException e) {
+            System.err.println("Error JSON parsing response message!");
+        } catch (java.net.ConnectException e) {
+
+        } catch (IOException e) {
+            System.err.println("Error getting new Messages: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return newMessages;
+    }
+
+    /**
+     *
+     * @return new messages vended by the server
+     */
     public ArrayList<Message> loadHistory(String username) {
         ArrayList<Message> messageHistory = new ArrayList<>();
         try {
