@@ -34,3 +34,4 @@ Now you should be able to run the Client and start sending messages!
 ##Getting JavaFX for Ubuntu
 sudo apt-get install openjfx
 sudo apt-get install libcanberra-gtk-module
+Next, re-add your sdk through File->Project Structure -> SDKs
