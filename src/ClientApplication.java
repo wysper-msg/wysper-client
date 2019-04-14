@@ -288,6 +288,10 @@ public class ClientApplication extends Application {
         builder.append("\n"+message.body+"\n");
         return builder.toString();
     }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 }
 
 class ApplicationGetMessages implements Runnable{
