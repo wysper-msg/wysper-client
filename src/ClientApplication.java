@@ -1,5 +1,3 @@
-package src;
-
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -20,10 +18,16 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+/**
+ * The purpose of this class is to run the GUI for the client application.
+ * It uses the JavaFX framework.
+ */
 
 public class ClientApplication extends Application {
+    //semaphore needed for multithreading
     public static Semaphore semaphore = new Semaphore(1);
 
+    //Starting dimension variables
     int MESSAGE_LOADING_STEP = 20;
     double TOP_BUTTON_WIDTH = 400;
     double TOP_BUTTON_HEIGHT = 40;
@@ -39,6 +43,8 @@ public class ClientApplication extends Application {
     double POPUP_INPUT_HEIGHT = 40;
     double LOGIN_BUTTON_WIDTH = 200;
     double LOGIN_BUTTON_HEIGHT = 40;
+
+    //UI elements
     private Button logoutButton;
     private Button moreMessagesButton;
     private TextArea newMessage;
@@ -61,7 +67,18 @@ public class ClientApplication extends Application {
     private Integer numberOfMessagesLoaded = 0;
     private Stage chatRoomStage;
     private Stage loginStage;
+
+    //Thread to get new messages at regular intervals
     private Thread newMessagesThread;
+
+    /**
+     * This method is a callback from the JavaFX framework.
+     * It is the first method that will by called when launching the application.
+     * It make a window to gather login information and call proper methods
+     * when the user is logging in.
+     * @param primaryStage
+     * @throws Exception
+     */
     @Override
     public void start(Stage primaryStage) throws Exception {
 
@@ -71,6 +88,7 @@ public class ClientApplication extends Application {
         loginStage.initOwner(primaryStage);
         loginStage.setTitle("Wysper Login");
 
+        //Create the elements to gather IP address from user
         ipLabelBox = new Text(labelMaker(ipLabelText));
         ipText = new TextArea();
         ipText.setMinWidth(POPUP_INPUT_WIDTH);
@@ -81,7 +99,7 @@ public class ClientApplication extends Application {
         ipBox.setAlignment(Pos.CENTER_RIGHT);
 
 
-
+        //Create the elements to gather port information from user
         portLabelBox = new Text(labelMaker(portLableText));
         portText = new TextArea();
         portText.setMinWidth(POPUP_INPUT_WIDTH);
@@ -91,6 +109,7 @@ public class ClientApplication extends Application {
         HBox portBox = new HBox(portLabelBox, portText);
         portBox.setAlignment(Pos.CENTER_RIGHT);
 
+        //Create the elements to gather username information from user
         usernameLabelBox = new Text(labelMaker(usernameLabelText));
         usernameText = new TextArea();
         usernameText.setMinWidth(POPUP_INPUT_WIDTH);
@@ -101,6 +120,7 @@ public class ClientApplication extends Application {
         usernameBox.setAlignment(Pos.CENTER_RIGHT);
 
 
+        //Create the Login button to log the user into chat room
         Button loginButton = new Button();
         loginButton.setText("Login");
         loginButton.setMinHeight(LOGIN_BUTTON_HEIGHT);
@@ -110,15 +130,22 @@ public class ClientApplication extends Application {
         loginButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
+                //Gather the data from the UI fields
                 serverIPAddress = ipText.getText();
                 serverPortNumber = Integer.valueOf(portText.getText());
                 username = usernameText.getText();
                 ipText.setText("");
                 portText.setText("");
                 usernameText.setText("");
+
+                //hide the login window
                 loginStage.hide();
+
+                //Create a new client
                 client = new Client(username);
                 client.setServer(serverIPAddress, serverPortNumber);
+
+                //Launch a new chatroom
                 try {
                     launchChatroom();
                 } catch (InterruptedException e) {
@@ -129,27 +156,38 @@ public class ClientApplication extends Application {
         HBox loginBox = new HBox(loginButton);
         loginBox.setAlignment(Pos.CENTER);
 
+        //Add all components into the scene
         VBox popupBox = new VBox(ipBox, portBox, usernameBox, loginBox);
         Scene popupScene = new Scene(popupBox);
 
-        popupScene.getStylesheets().add("src/darktheme.css");
+        //Set the theme
+        popupScene.getStylesheets().add("darktheme.css");
 
+        //Set the window dimensions and show it
         loginStage.setScene(popupScene);
         loginStage.setMinHeight(POPUP_INPUT_HEIGHT*3+LOGIN_BUTTON_HEIGHT+28);
         loginStage.setMaxHeight(POPUP_INPUT_HEIGHT*3+LOGIN_BUTTON_HEIGHT+28);
         loginStage.setMinWidth(POPUP_LABEL_WIDTH*6.4 + POPUP_INPUT_WIDTH);
         loginStage.setMaxWidth(POPUP_LABEL_WIDTH*6.4 + POPUP_INPUT_WIDTH);
-
         loginStage.show();
     }
 
-    public void launchChatroom() throws InterruptedException {
+    /**
+     * This method is called when the user clicks on the login button.
+     * @throws InterruptedException
+     */
+    private void launchChatroom() throws InterruptedException {
+        //Create the window for the chatroom
         chatRoomStage = new Stage();
         chatRoomStage.setTitle("Wysper");
+
+        //Create the send button
         sendButton = new Button();
         sendButton.setText("Send Message");
         sendButton.setMinWidth(SEND_BUTTON_WIDTH);
         sendButton.setMinHeight(SEND_BUTTON_HEIGHT);
+
+        //send the message on click of the send button
         sendButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
@@ -162,6 +200,7 @@ public class ClientApplication extends Application {
             }
         });
 
+        //Create the message box
         messageBox = new TextArea();
         messageBox.autosize();
         messageBox.setMinWidth(MESSAGE_PANE_WIDTH);
@@ -174,6 +213,8 @@ public class ClientApplication extends Application {
                 messageBox.setScrollTop(Double.MAX_VALUE);
             }
         });
+
+        //Populate existing chatroom messages
         List<Message> messageHistory = client.getMessageHistory();
         StringBuilder builder = new StringBuilder();
 
@@ -183,6 +224,7 @@ public class ClientApplication extends Application {
         }
         messageBox.appendText(builder.toString());
 
+        //Create the new message box
         newMessage = new TextArea();
         newMessage.setMinWidth(NEW_MESSAGE_BOX_WIDTH);
         newMessage.setMinHeight(NEW_MESSAGE_BOX_HEIGHT);
@@ -190,10 +232,12 @@ public class ClientApplication extends Application {
         hbox.setMaxHeight(NEW_MESSAGE_BOX_HEIGHT);
         hbox.setMinHeight(NEW_MESSAGE_BOX_HEIGHT);
 
+        //Create the logout button
         logoutButton = new Button();
         logoutButton.setText("Logout");
         logoutButton.setMinWidth(TOP_BUTTON_WIDTH);
         logoutButton.setMinHeight(TOP_BUTTON_HEIGHT);
+        //set on click behavior for logout button
         logoutButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
@@ -204,6 +248,8 @@ public class ClientApplication extends Application {
                 loginStage.show();
             }
         });
+
+        //Create the more messages button
         moreMessagesButton = new Button();
         moreMessagesButton.setText("Get more messages");
         moreMessagesButton.setMinWidth(TOP_BUTTON_WIDTH);
@@ -229,6 +275,7 @@ public class ClientApplication extends Application {
             }
         });
 
+        //Add all elements into layouts
         HBox topButtons = new HBox(logoutButton, moreMessagesButton);
         topButtons.setMaxHeight(TOP_BUTTON_HEIGHT);
         topButtons.setMinHeight(TOP_BUTTON_HEIGHT);
@@ -240,7 +287,8 @@ public class ClientApplication extends Application {
         vbox.autosize();
         chatRoomScene  = new Scene(vbox, MESSAGE_PANE_WIDTH, TOP_BUTTON_HEIGHT+MESSAGE_PANE_HEIGHT+NEW_MESSAGE_BOX_HEIGHT);
 
-        chatRoomScene.getStylesheets().add("src/darktheme.css");
+        //Set the styling, size, and resize behavior of the chatroom window
+        chatRoomScene.getStylesheets().add("darktheme.css");
         chatRoomStage.setScene(chatRoomScene);
         chatRoomStage.setMinWidth(MESSAGE_PANE_WIDTH);
         chatRoomStage.setMinHeight(TOP_BUTTON_HEIGHT + SEND_BUTTON_HEIGHT + 25);
@@ -257,12 +305,21 @@ public class ClientApplication extends Application {
             newMessage.setMinWidth(chatRoomScene.getWidth()-SEND_BUTTON_WIDTH);
         });
         chatRoomStage.setFullScreen(true);
+        //Show the chatroom window
         chatRoomStage.show();
+
+        //Start the background polling of new messages
         ApplicationGetMessages getMessages = new ApplicationGetMessages(client, messageBox, numberOfMessagesLoaded);
         newMessagesThread = new Thread(getMessages);
         newMessagesThread.start();
     }
 
+    /**
+     * The method is used to create labels with the same length for
+     * the login screen
+     * @param input
+     * @return
+     */
     private String labelMaker(String input) {
         POPUP_LABEL_WIDTH = Integer.max(ipLabelText.length(), Integer.max(portLableText.length(), usernameLabelText.length()));
         StringBuilder builder = new StringBuilder();
@@ -274,6 +331,11 @@ public class ClientApplication extends Application {
         return builder.toString();
     }
 
+    /**
+     * String formatter of messages to go into the message box.
+     * @param message - Message to be formatted into String
+     * @return
+     */
     public static String messageFormatter(Message message) {
         String header = message.username.toString() + " " + new SimpleDateFormat("hh:mm:ss").format(message.timestamp);
 
@@ -294,6 +356,10 @@ public class ClientApplication extends Application {
     }
 }
 
+/**
+ * The purpose of this class is to be a secondary thread running in the background to
+ * pull more messages from the server.
+ */
 class ApplicationGetMessages implements Runnable{
     private Client client;
     private TextArea messageBox;
@@ -306,6 +372,7 @@ class ApplicationGetMessages implements Runnable{
 
     public void run() {
         while(true) {
+            //Wait half a second between checking for new messages
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e){
@@ -315,11 +382,15 @@ class ApplicationGetMessages implements Runnable{
                 System.out.println("MessageBox is NULL");
                 continue;
             }
+
+            //Make the client check for any new messages
             List<Message> newMessages;
             try {
                 ClientApplication.semaphore.acquire();
                 newMessages = client.getNewMessages();
                 ClientApplication.semaphore.release();
+
+                //Output the new messages the client has received from the server
                 if(newMessages != null){
                     StringBuilder builder = new StringBuilder();
 

@@ -1,5 +1,3 @@
-package src;// A Java program for a Client
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;

@@ -1,5 +1,3 @@
-package src;
-
 import org.json.simple.JSONObject;
 
 import java.sql.Timestamp;
