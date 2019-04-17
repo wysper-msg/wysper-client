@@ -132,24 +132,40 @@ public class ClientApplication extends Application {
             public void handle(MouseEvent mouseEvent) {
                 //Gather the data from the UI fields
                 serverIPAddress = ipText.getText();
-                serverPortNumber = Integer.valueOf(portText.getText());
+                try {
+                    serverPortNumber = Integer.valueOf(portText.getText());
+                } catch (NumberFormatException e) {
+                    System.out.println("Enter a valid integer to the port number box.");
+                    ipText.setText("");
+                    portText.setText("");
+                    usernameText.setText("");
+                    return;
+                }
                 username = usernameText.getText();
                 ipText.setText("");
                 portText.setText("");
                 usernameText.setText("");
+                if(serverIPAddress.length() == 0){
+                    System.out.println("You must enter an IP address.");
+                    return;
+                }
+                if(username.length() > 0 && username.length() < 31) {
+                    //hide the login window
+                    loginStage.hide();
 
-                //hide the login window
-                loginStage.hide();
+                    //Create a new client
+                    client = new Client(username);
+                    client.setServer(serverIPAddress, serverPortNumber);
 
-                //Create a new client
-                client = new Client(username);
-                client.setServer(serverIPAddress, serverPortNumber);
-
-                //Launch a new chatroom
-                try {
-                    launchChatroom();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    //Launch a new chatroom
+                    try {
+                        launchChatroom();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.out.println("Username must be between 1 and 30 characters.");
+                    return;
                 }
             }
         });
