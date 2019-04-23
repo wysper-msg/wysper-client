@@ -13,7 +13,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -129,9 +128,9 @@ public class ClientApplication extends Application {
           @Override
           public void handle(MouseEvent mouseEvent) {
             // Gather the data from the UI fields
-            serverIPAddress = ipText.getText();
+            serverIPAddress = ipText.getText().trim();
             try {
-              serverPortNumber = Integer.valueOf(portText.getText());
+              serverPortNumber = Integer.valueOf(portText.getText().trim());
             } catch (NumberFormatException e) {
               System.out.println("Enter a valid integer to the port number box.");
               ipText.setText("");
@@ -139,7 +138,7 @@ public class ClientApplication extends Application {
               usernameText.setText("");
               return;
             }
-            username = usernameText.getText();
+            username = usernameText.getText().trim();
             ipText.setText("");
             portText.setText("");
             usernameText.setText("");
@@ -195,6 +194,9 @@ public class ClientApplication extends Application {
     // Create the window for the chatroom
     chatRoomStage = new Stage();
     chatRoomStage.setTitle("Wysper");
+    chatRoomStage.setOnCloseRequest(event -> {
+      newMessagesThread.stop();
+    });
 
     // Create the send button
     sendButton = new Button();
