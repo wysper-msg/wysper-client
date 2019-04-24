@@ -339,7 +339,6 @@ public class ClientApplication extends Application {
               moreMessagesButton.setMinWidth(newTopButtonWidths);
               newMessage.setMinWidth(chatRoomScene.getWidth() - SEND_BUTTON_WIDTH);
             });
-    chatRoomStage.setFullScreen(true);
     // Show the chatroom window
     chatRoomStage.show();
 
